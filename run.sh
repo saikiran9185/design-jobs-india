@@ -21,7 +21,7 @@ case "${1:-serve}" in
   ingest) python -m backend.ingest "${@:2}" ;;
   probe)  python -m backend.probe ;;
   contacts) python -m backend.find_contacts ;;
-  export) python -m backend.export_static ;;
+  export) python -m backend.export_static && python -m backend.trust ;;
   flags)  python -m backend.flags ;;
   sync)   python -m backend.supabase_sync "${@:2}" ;;
   serve)

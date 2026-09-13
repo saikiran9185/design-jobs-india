@@ -3,7 +3,7 @@
 const $ = s => document.querySelector(s);
 const REPO = 'https://github.com/saikiran9185/design-jobs-india';
 
-let JOBS = [], COMPANIES = [], FLAGS = {}, shown = 0;
+let JOBS = [], COMPANIES = [], FLAGS = {}, EMPLOYERS = {}, shown = 0;
 let VIEW = 'map', ME = null, MAP = null, CLUSTER = null;
 const PAGE = 60;
 const sel = { kind: new Set(), remote: new Set(), job_type: new Set(), discipline: new Set(), source: new Set(), city: new Set() };
@@ -50,6 +50,15 @@ const distOf = j => (ME && j.lat != null && !(j.lat === 0 && j.lng === 0))
   ? km(ME, [j.lat, j.lng]) : null;
 
 // --- trust: counts come from the repo's issue tracker, rebuilt daily ---
+// Not a star rating. Every part of this is a fact the reader can go and check —
+// inventing a score out of signals that do not measure what a job is like to do
+// would read as authoritative and mean nothing.
+function employerBadge(j) {
+  const e = EMPLOYERS[(j.company || '').toLowerCase()];
+  if (!e || !e.known) return '';
+  return `<span class="tag known" title="${esc(e.reasons.join(' · '))}">✓ known employer</span>`;
+}
+
 function trustBadge(j) {
   const f = FLAGS[j.id];
   if (!f) return '';
@@ -153,7 +162,7 @@ function card(j) {
       <span class="tag ${j.job_type === 'internship' ? 'intern' : ''} ${j.kind && j.kind !== 'job' ? 'kind' : ''}">${j.kind && j.kind !== 'job' ? j.kind : j.job_type}</span>
       ${j.discipline.map(d => `<span class="tag disc">${d}</span>`).join('')}
       <span class="tag">${esc(j.source)}</span><span class="tag">${ago(j.posted_at)}</span>
-      ${deadlineTag(j)}${trustBadge(j)}
+      ${deadlineTag(j)}${employerBadge(j)}${trustBadge(j)}
       <span class="jbtns">
         <a class="icon" href="${issueUrl(j, 'verify')}" target="_blank" rel="noopener" title="Confirm this listing is genuine">✓ verify</a>
         <a class="icon" href="${issueUrl(j, 'report')}" target="_blank" rel="noopener" title="Flag as scam, fake or expired">⚠ report</a>
@@ -184,7 +193,7 @@ function gridCard(j) {
         <b>${esc(j.company || '—')}</b>
         <span class="muted">${esc(j.city || j.location || '')}${d !== null ? ` · ${Math.round(d)} km` : ''}</span>
       </div>
-      ${trustBadge(j)}
+      ${employerBadge(j)}${trustBadge(j)}
     </div>
     <h3><a href="${esc(j.url)}" target="_blank" rel="noopener">${esc(j.title)}</a></h3>
     <div class="meta">
@@ -243,7 +252,15 @@ function renderMap(rows) {
     ).addTo(CLUSTER);
   });
 
-  $('#count').textContent = `${rows.length.toLocaleString()} matching · ${pts.length.toLocaleString()} placed on map`;
+  const missing = rows.length - pts.length;
+  $('#count').innerHTML = `${pts.length.toLocaleString()} on the map`
+    + (missing ? ` · <span class="muted">${missing.toLocaleString()} gave no city —
+        <a href="#" id="tolist">see them in List</a></span>` : '');
+  const tl = document.getElementById('tolist');
+  if (tl) tl.onclick = e => {
+    e.preventDefault();
+    document.querySelector('.vbtn[data-view="list"]').click();
+  };
   if (ME) {
     L.circleMarker(ME, { radius: 8, color: '#1d6fd0', weight: 3, fillOpacity: .3 })
       .bindPopup('You are here').addTo(CLUSTER);
@@ -411,12 +428,14 @@ $('#repo').href = REPO;
 // --- boot ---
 (async () => {
   try {
-    const [j, c, f] = await Promise.all([
+    const [j, c, f, emp] = await Promise.all([
       fetch('data/jobs.json').then(r => r.json()),
       fetch('data/companies.json').then(r => r.json()).catch(() => ({ companies: [] })),
       fetch('data/flags.json').then(r => r.json()).catch(() => ({ flags: {} })),
+      fetch('data/employers.json').then(r => r.json()).catch(() => ({ employers: {} })),
     ]);
     JOBS = j.jobs; COMPANIES = c.companies || []; FLAGS = f.flags || {};
+    EMPLOYERS = emp.employers || {};
     $('#stats').textContent =
       `${(j.kinds?.job ?? j.count).toLocaleString()} jobs · ${j.india} in India · `
       + `${(j.kinds?.competition ?? 0) + (j.kinds?.hackathon ?? 0)} competitions · `

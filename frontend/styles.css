@@ -173,3 +173,4 @@ code{background:var(--bg);padding:1px 6px;border-radius:4px;border:1px solid var
 /* Contributing a listing is a side door, not the headline action. */
 .btn.subtle{color:var(--muted);border-style:dashed}
 .btn.subtle:hover{color:var(--accent);border-style:solid}
+.tag.known{color:var(--ok);border-color:currentColor;font-weight:600;opacity:.9}
