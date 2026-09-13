@@ -4,7 +4,7 @@ const $ = s => document.querySelector(s);
 const REPO = 'https://github.com/saikiran9185/design-jobs-india';
 
 let JOBS = [], COMPANIES = [], FLAGS = {}, shown = 0;
-let VIEW = 'list', ME = null, MAP = null, CLUSTER = null;
+let VIEW = 'map', ME = null, MAP = null, CLUSTER = null;
 const PAGE = 60;
 const sel = { kind: new Set(), remote: new Set(), job_type: new Set(), discipline: new Set(), source: new Set(), city: new Set() };
 

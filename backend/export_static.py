@@ -5,7 +5,9 @@ GitHub Actions runs the ingest, then this, then deploys `site/`.
 """
 from __future__ import annotations
 
+import hashlib
 import json
+import re
 import shutil
 import sys
 from datetime import datetime, timezone
@@ -77,12 +79,43 @@ def export_companies() -> int:
     return len(out)
 
 
+ASSETS = ("styles.css", "app.js", "submit.js", "config.js")
+
+
+def stamp_assets() -> list[str]:
+    """Append a content hash to local asset URLs in index.html.
+
+    GitHub Pages serves with `cache-control: max-age=600`, so a browser can hold a
+    stale stylesheet for ten minutes after a deploy. A CSS fix that has shipped but
+    is not being applied looks exactly like a bug that was never fixed. Hashing the
+    URL makes every change a new URL, so updates land immediately.
+    """
+    index = SITE / "index.html"
+    if not index.exists():
+        return []
+    html = index.read_text()
+    stamped = []
+    for name in ASSETS:
+        f = SITE / name
+        if not f.exists():
+            continue
+        digest = hashlib.sha1(f.read_bytes()).hexdigest()[:10]
+        # match the bare name or one that already carries a stamp
+        html = re.sub(rf'(["\'])({re.escape(name)})(\?v=[0-9a-f]+)?\1',
+                      rf'\g<1>{name}?v={digest}\g<1>', html)
+        stamped.append(f"{name}?v={digest}")
+    index.write_text(html)
+    return stamped
+
+
 def main() -> int:
     DATA.mkdir(parents=True, exist_ok=True)
     db.init()
     with db.connect() as conn:
         n_jobs = export_jobs(conn)
     n_co = export_companies()
+    for a in stamp_assets():
+        print(f"  stamped {a}")
     size = (DATA / "jobs.json").stat().st_size / 1024
     print(f"site/data/jobs.json       {n_jobs:5} jobs      {size:.0f} KB")
     print(f"site/data/companies.json  {n_co:5} companies")

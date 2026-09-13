@@ -17,8 +17,13 @@
 
   // ---------- modal ----------
   const wrap = $('#submitwrap');
-  const open = () => { wrap.hidden = false; opened = Date.now(); $('#s_title').focus(); };
-  const close = () => { wrap.hidden = true; };
+  // Set both the attribute and the inline style. A stale cached stylesheet must
+  // never be able to leave this dialog stuck open over the page.
+  const open = () => {
+    wrap.hidden = false; wrap.style.display = 'grid';
+    opened = Date.now(); $('#s_title').focus();
+  };
+  const close = () => { wrap.hidden = true; wrap.style.display = 'none'; };
 
   $('#addjob').onclick = open;
   $('#mclose').onclick = close;
