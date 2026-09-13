@@ -35,6 +35,7 @@ def remoteok(client, **_):
             company=j.get("company", ""), location=j.get("location", "") or "Remote",
             description=j.get("description", ""), url=j.get("url", ""),
             posted_at=j.get("date"), remote_hint="remote",
+            image=j.get("company_logo") or j.get("logo"),
         )
         if _num(j.get("salary_min")):
             job.update(salary_min=_num(j["salary_min"]), salary_max=_num(j.get("salary_max")),
@@ -56,6 +57,7 @@ def remotive(client, **_):
             description=j.get("description", ""), url=j.get("url", ""),
             posted_at=j.get("publication_date"), job_type_hint=j.get("job_type", "") or "",
             remote_hint="remote", salary_text=j.get("salary", "") or "",
+            image=j.get("company_logo_url") or j.get("company_logo"),
         )
         for j in r.json().get("jobs", [])
         if is_design_role(j.get("title", ""))   # their "design" category carries QA and DevOps
@@ -102,6 +104,7 @@ def himalayas(client, **_):
                 description=j.get("description") or j.get("excerpt", ""),
                 url=j.get("applicationLink", ""), posted_at=j.get("pubDate"),
                 job_type_hint=j.get("employmentType", "") or "", remote_hint="remote",
+                image=j.get("companyLogo"),
             )
             if _num(j.get("minSalary")):
                 job.update(salary_min=_num(j["minSalary"]), salary_max=_num(j.get("maxSalary")),

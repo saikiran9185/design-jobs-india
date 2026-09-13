@@ -67,6 +67,7 @@ def _unstop_job(item: dict, kind: str) -> dict | None:
         description=_skills(item) or title,
         url=url, posted_at=item.get("updated_at"),
         job_type_hint=hint, remote_hint=remote_hint,
+        image=item.get("logoUrl2") or (item.get("organisation") or {}).get("logoUrl2"),
     )
 
     # Unstop publishes structured pay in rupees — far better than parsing prose.

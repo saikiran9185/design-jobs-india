@@ -100,6 +100,34 @@ def run_ats_sources(conn, client) -> None:
     db.log_run(conn, "ats", 0, total, True, None)
 
 
+def mark_recurring(conn) -> int:
+    """Flag competitions that run again each year.
+
+    "Design Marathon 2025" and "Design Marathon 2026" are the same event, so strip the
+    edition number and group. Knowing something is annual tells you to watch for the
+    next round even if this one has closed.
+    """
+    import re
+    from collections import defaultdict
+
+    groups = defaultdict(list)
+    rows = conn.execute(
+        "SELECT id, company, title FROM jobs WHERE kind IN ('competition','hackathon')").fetchall()
+    for r in rows:
+        base = re.sub(r"\b(19|20)\d{2}\b", "", r["title"])         # 2026
+        base = re.sub(r"['’]\s?\d{2}\b", "", base)              # '26
+        base = re.sub(r"\b(season|edition|vol\.?|v)\s*\d+\b", "", base, flags=re.I)
+        base = re.sub(r"\b(i{1,3}|iv|v|vi{1,3}|ix|x)\b", "", base, flags=re.I)
+        base = re.sub(r"[^a-z0-9]+", " ", base.lower()).strip()
+        if len(base) > 5:
+            groups[(r["company"] or "", base)].append(r["id"])
+
+    ids = [i for members in groups.values() if len(members) > 1 for i in members]
+    if ids:
+        conn.executemany("UPDATE jobs SET recurring = 1 WHERE id = ?", [(i,) for i in ids])
+    return len(ids)
+
+
 def main(argv: list[str]) -> int:
     only = set(argv) if argv else None
     db.init()
@@ -109,6 +137,9 @@ def main(argv: list[str]) -> int:
         if not only:
             print("\nCompany ATS boards")
             run_ats_sources(conn, client)
+        n_rec = mark_recurring(conn)
+        if n_rec:
+            print(f"\n{n_rec} listings look like recurring events")
         conn.commit()
         total = conn.execute("SELECT COUNT(*) FROM jobs").fetchone()[0]
         india = conn.execute("SELECT COUNT(*) FROM jobs WHERE is_india=1").fetchone()[0]

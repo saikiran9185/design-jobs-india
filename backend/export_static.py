@@ -23,7 +23,7 @@ DATA = SITE / "data"
 
 FIELDS = ["id", "source", "title", "company", "location", "city", "remote", "job_type",
           "discipline", "salary_min", "salary_max", "salary_currency", "salary_period",
-          "url", "apply_email", "posted_at", "is_india", "kind", "deadline"]
+          "url", "apply_email", "posted_at", "is_india", "kind", "deadline", "image", "lat", "lng", "recurring"]
 
 
 def monthly_inr(r) -> int | None:

@@ -279,7 +279,7 @@ EMAIL_RE = re.compile(r"[\w.+-]+@[\w-]+\.[\w.]+")
 
 def build_job(*, source, external_id, title, company=None, location="", country="",
               description="", url="", posted_at=None, job_type_hint="",
-              remote_hint="", salary_text="") -> dict:
+              remote_hint="", salary_text="", image=None) -> dict:
     """The single funnel every source passes through."""
     desc = clean_html(description)
     location = (location or "").strip()
@@ -304,6 +304,11 @@ def build_job(*, source, external_id, title, company=None, location="", country=
         "is_india": int(detect_india(location, country, company or "")),
         "kind": "job",
         "deadline": None,
+        "image": image,
+        "recurring": 0,
     }
     job.update(parse_salary(salary_text or desc))
+
+    from .geo import locate
+    job["lat"], job["lng"] = locate(job["city"], location, bool(job["is_india"]))
     return job

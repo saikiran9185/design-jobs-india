@@ -5,6 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Design Jobs India</title>
 <meta name="description" content="Design jobs, internships and freelance work across India — collected from company job boards and job APIs, in one filterable place.">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/MarkerCluster.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/MarkerCluster.Default.min.css">
 <link rel="stylesheet" href="styles.css">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎨</text></svg>">
 </head>
@@ -51,11 +54,25 @@
       <p class="hint">Most Indian listings publish no salary. This hides them.</p>
     </div>
     <div class="fgroup">
-      <label class="flabel">Posted</label>
+      <label class="flabel">Timeline</label>
       <select id="days">
-        <option value="0">Any time</option><option value="7">Last 7 days</option>
+        <option value="0">Any time</option><option value="1">Last 24 hours</option>
+        <option value="3">Last 3 days</option><option value="7">Last 7 days</option>
         <option value="30">Last 30 days</option><option value="90">Last 3 months</option>
       </select>
+      <div class="daterow">
+        <input id="from" type="date" title="Posted on or after">
+        <input id="to" type="date" title="Posted on or before">
+      </div>
+      <label class="check"><input id="openonly" type="checkbox"> Still open only</label>
+      <label class="check"><input id="recurring" type="checkbox"> Recurring events only</label>
+    </div>
+
+    <div class="fgroup">
+      <label class="flabel">Distance</label>
+      <button id="nearme" class="btn wide">Use my location</button>
+      <input id="radius" type="range" min="0" max="500" step="10" value="0" disabled>
+      <p class="hint" id="radlabel">Allow location to filter by how far a job is from you.</p>
     </div>
     <div class="fgroup">
       <label class="flabel">Your shortlist</label>
@@ -76,11 +93,19 @@
   <section class="results">
     <div class="rhead">
       <span id="count" class="muted"></span>
+      <div class="viewsw">
+        <button class="vbtn active" data-view="list">List</button>
+        <button class="vbtn" data-view="grid">Grid</button>
+        <button class="vbtn" data-view="map">Map</button>
+      </div>
       <select id="sort">
         <option value="date">Newest</option><option value="salary">Highest pay</option>
         <option value="company">Company A–Z</option><option value="title">Title A–Z</option>
+        <option value="distance">Nearest to me</option>
+        <option value="deadline">Closing soonest</option>
       </select>
     </div>
+    <div id="map" hidden></div>
     <div id="list"></div>
     <button id="more" class="btn wide" hidden>Load more</button>
   </section>
@@ -140,6 +165,8 @@
 </main>
 
 <div id="toast" class="toast" hidden></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/leaflet.markercluster.min.js"></script>
 <script src="app.js"></script>
 </body>
 </html>

@@ -4,6 +4,7 @@ const $ = s => document.querySelector(s);
 const REPO = 'https://github.com/saikiran9185/design-jobs-india';
 
 let JOBS = [], COMPANIES = [], FLAGS = {}, shown = 0;
+let VIEW = 'list', ME = null, MAP = null, CLUSTER = null;
 const PAGE = 60;
 const sel = { kind: new Set(), remote: new Set(), job_type: new Set(), discipline: new Set(), source: new Set(), city: new Set() };
 
@@ -37,6 +38,16 @@ const money = j => {
     ? ` <span class="muted" style="font-weight:400">(${j.salary_currency})</span>` : '';
   return txt + foreign;
 };
+
+const km = (a, b) => {
+  const R = 6371, r = Math.PI / 180;
+  const dLat = (b[0] - a[0]) * r, dLng = (b[1] - a[1]) * r;
+  const h = Math.sin(dLat / 2) ** 2 +
+            Math.cos(a[0] * r) * Math.cos(b[0] * r) * Math.sin(dLng / 2) ** 2;
+  return 2 * R * Math.asin(Math.sqrt(h));
+};
+const distOf = j => (ME && j.lat != null && !(j.lat === 0 && j.lng === 0))
+  ? km(ME, [j.lat, j.lng]) : null;
 
 // --- trust: counts come from the repo's issue tracker, rebuilt daily ---
 function trustBadge(j) {
@@ -81,6 +92,10 @@ function filtered() {
   const india = $('#india').value, days = +$('#days').value, minPay = +$('#salary').value;
   const hasSal = $('#hassal').checked, onlyStar = $('#starred').checked, hideApplied = $('#notapplied').checked;
   const cutoff = days ? Date.now() - days * 864e5 : 0;
+  const from = $('#from').value ? new Date($('#from').value) : null;
+  const to = $('#to').value ? new Date($('#to').value + 'T23:59:59') : null;
+  const openOnly = $('#openonly').checked, recurringOnly = $('#recurring').checked;
+  const radius = ME ? +$('#radius').value : 0;
 
   const onlyVerified = $('#onlyverified').checked, hideReported = $('#hidereported').checked;
 
@@ -100,6 +115,11 @@ function filtered() {
     if (hasSal && !j.salary_min) return false;
     if (minPay && (j.pay_inr_month || 0) < minPay) return false;
     if (cutoff && new Date(j.posted_at).getTime() < cutoff) return false;
+    if (from && new Date(j.posted_at) < from) return false;
+    if (to && new Date(j.posted_at) > to) return false;
+    if (openOnly && j.deadline && new Date(j.deadline) < Date.now()) return false;
+    if (recurringOnly && !j.recurring) return false;
+    if (radius) { const d = distOf(j); if (d === null || d > radius) return false; }
     const m = mine[j.id] || {};
     if (onlyStar && !m.starred) return false;
     if (hideApplied && m.applied) return false;
@@ -108,7 +128,9 @@ function filtered() {
 
   const s = $('#sort').value;
   out.sort((a, b) =>
-    s === 'salary' ? (b.pay_inr_month || 0) - (a.pay_inr_month || 0)
+    s === 'distance' ? ((distOf(a) ?? 1e9) - (distOf(b) ?? 1e9))
+    : s === 'deadline' ? (new Date(a.deadline || '2999') - new Date(b.deadline || '2999'))
+    : s === 'salary' ? (b.pay_inr_month || 0) - (a.pay_inr_month || 0)
     : s === 'company' ? (a.company || '').localeCompare(b.company || '')
     : s === 'title' ? a.title.localeCompare(b.title)
     : new Date(b.posted_at) - new Date(a.posted_at));
@@ -148,8 +170,95 @@ function card(j) {
   return el;
 }
 
+function gridCard(j) {
+  const m = mine[j.id] || {};
+  const d = distOf(j);
+  const el = document.createElement('div');
+  el.className = 'gcard';
+  el.innerHTML = `
+    <div class="gtop">
+      ${j.image ? `<img class="glogo" src="${esc(j.image)}" alt="" loading="lazy"
+                        onerror="this.remove()">`
+                : `<div class="glogo ph">${esc((j.company || j.title || '?')[0].toUpperCase())}</div>`}
+      <div class="gmeta">
+        <b>${esc(j.company || '—')}</b>
+        <span class="muted">${esc(j.city || j.location || '')}${d !== null ? ` · ${Math.round(d)} km` : ''}</span>
+      </div>
+      ${trustBadge(j)}
+    </div>
+    <h3><a href="${esc(j.url)}" target="_blank" rel="noopener">${esc(j.title)}</a></h3>
+    <div class="meta">
+      <span class="tag ${j.kind && j.kind !== 'job' ? 'kind' : ''}">${j.kind !== 'job' ? j.kind : j.job_type}</span>
+      ${j.recurring ? '<span class="tag">recurring</span>' : ''}
+      ${j.discipline.slice(0, 2).map(x => `<span class="tag disc">${x}</span>`).join('')}
+    </div>
+    <div class="gfoot">
+      <span class="sal">${money(j)}</span>
+      <span class="muted">${deadlineTag(j) ? '' : ago(j.posted_at)}</span>
+      ${deadlineTag(j)}
+      <span class="jbtns">
+        <a class="icon" href="${issueUrl(j, 'verify')}" target="_blank" rel="noopener">✓</a>
+        <button class="icon ${m.starred ? 'on' : ''}" data-f="starred">★</button>
+      </span>
+    </div>`;
+  el.querySelectorAll('.icon[data-f]').forEach(b => b.onclick = () => {
+    const f = b.dataset.f;
+    mine[j.id] = { ...(mine[j.id] || {}), [f]: !(mine[j.id] || {})[f] };
+    store.write('dji:jobs', mine);
+    b.classList.toggle('on', mine[j.id][f]);
+  });
+  return el;
+}
+
+// --- map ---
+function renderMap(rows) {
+  if (!window.L) { $('#map').innerHTML = '<div class="empty">Map library failed to load.</div>'; return; }
+  if (!MAP) {
+    MAP = L.map('map', { scrollWheelZoom: true }).setView([22.6, 78.9], 5);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 18, attribution: '© OpenStreetMap',
+    }).addTo(MAP);
+    CLUSTER = L.markerClusterGroup({ maxClusterRadius: 45 });
+    MAP.addLayer(CLUSTER);
+  }
+  CLUSTER.clearLayers();
+
+  const pts = rows.filter(j => j.lat != null && !(j.lat === 0 && j.lng === 0));
+  // spread listings that share one city centroid so they do not stack invisibly
+  const seen = {};
+  pts.forEach(j => {
+    const key = `${j.lat},${j.lng}`;
+    const n = seen[key] = (seen[key] || 0) + 1;
+    const jitter = n === 1 ? 0 : 0.004 * Math.sqrt(n);
+    const angle = n * 2.399;
+    const lat = j.lat + jitter * Math.cos(angle), lng = j.lng + jitter * Math.sin(angle);
+    const f = FLAGS[j.id] || {};
+    const colour = f.reported > 0 ? '#c0392b' : f.verified > 0 ? '#2f6f4e' : '#b4471f';
+    L.circleMarker([lat, lng], {
+      radius: 6, color: colour, weight: 2, fillColor: colour, fillOpacity: .55,
+    }).bindPopup(
+      `<b>${esc(j.title)}</b><br>${esc(j.company || '')}<br>` +
+      `<span style="color:#666">${esc(j.city || j.location || '')}</span><br>` +
+      `${money(j) || ''}<br><a href="${esc(j.url)}" target="_blank" rel="noopener">Open listing →</a>`
+    ).addTo(CLUSTER);
+  });
+
+  $('#count').textContent = `${rows.length.toLocaleString()} matching · ${pts.length.toLocaleString()} placed on map`;
+  if (ME) {
+    L.circleMarker(ME, { radius: 8, color: '#1d6fd0', weight: 3, fillOpacity: .3 })
+      .bindPopup('You are here').addTo(CLUSTER);
+  }
+  setTimeout(() => MAP.invalidateSize(), 60);
+}
+
 function render(reset = true) {
   const rows = filtered();
+
+  $('#map').hidden = VIEW !== 'map';
+  $('#list').hidden = VIEW === 'map';
+  $('#list').className = VIEW === 'grid' ? 'gridview' : '';
+  if (VIEW === 'map') { renderMap(rows); $('#more').hidden = true; return; }
+
   if (reset) { shown = 0; $('#list').innerHTML = ''; }
   if (!rows.length) {
     $('#list').innerHTML = `<div class="empty"><h3>No jobs match</h3>
@@ -157,7 +266,8 @@ function render(reset = true) {
     $('#count').textContent = '0 jobs'; $('#more').hidden = true; return;
   }
   const frag = document.createDocumentFragment();
-  rows.slice(shown, shown + PAGE).forEach(j => frag.appendChild(card(j)));
+  const make = VIEW === 'grid' ? gridCard : card;
+  rows.slice(shown, shown + PAGE).forEach(j => frag.appendChild(make(j)));
   $('#list').appendChild(frag);
   shown = Math.min(shown + PAGE, rows.length);
   $('#count').textContent = `${rows.length.toLocaleString()} job${rows.length === 1 ? '' : 's'}`;
@@ -260,8 +370,42 @@ $('#clear').onclick = () => {
   ['#hassal', '#starred', '#notapplied', '#onlyverified'].forEach(s => $(s).checked = false);
   $('#hidereported').checked = true;
   $('#days').value = '0'; $('#india').value = '';
+  ['#from', '#to'].forEach(s => $(s).value = '');
+  ['#openonly', '#recurring'].forEach(s => $(s).checked = false);
+  $('#radius').value = 0;
   buildFacets(); render();
 };
+document.querySelectorAll('.vbtn').forEach(b => b.onclick = () => {
+  document.querySelectorAll('.vbtn').forEach(x => x.classList.toggle('active', x === b));
+  VIEW = b.dataset.view;
+  render();
+});
+
+['#from', '#to'].forEach(s => $(s).onchange = () => render());
+['#openonly', '#recurring'].forEach(s => $(s).onchange = () => render());
+
+$('#nearme').onclick = () => {
+  if (!navigator.geolocation) return toast('This browser has no location support');
+  $('#nearme').textContent = 'Locating…';
+  navigator.geolocation.getCurrentPosition(pos => {
+    ME = [pos.coords.latitude, pos.coords.longitude];
+    $('#radius').disabled = false;
+    $('#nearme').textContent = 'Location set ✓';
+    $('#radlabel').textContent = 'Drag to limit how far a job can be.';
+    if (MAP) MAP.setView(ME, 9);
+    render();
+  }, () => {
+    $('#nearme').textContent = 'Use my location';
+    toast('Location permission denied');
+  }, { timeout: 10000 });
+};
+
+$('#radius').oninput = e => {
+  const v = +e.target.value;
+  $('#radlabel').textContent = v ? `Within ${v} km of you` : 'Any distance';
+};
+$('#radius').onchange = () => render();
+
 $('#repo').href = REPO;
 
 // --- boot ---

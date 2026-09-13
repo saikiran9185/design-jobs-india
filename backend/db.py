@@ -29,6 +29,10 @@ CREATE TABLE IF NOT EXISTS jobs (
     apply_email     TEXT,
     posted_at       TEXT,
     fetched_at      TEXT,
+    image           TEXT,
+    lat             REAL,
+    lng             REAL,
+    recurring       INTEGER DEFAULT 0,
     kind            TEXT DEFAULT 'job',   -- job | competition | hackathon | event
     deadline        TEXT,
     verified        INTEGER DEFAULT 0,    -- community confirmations
@@ -91,7 +95,7 @@ COLUMNS = [
     "id", "source", "external_id", "title", "company", "location", "city", "country",
     "remote", "job_type", "discipline", "salary_min", "salary_max", "salary_currency",
     "salary_period", "salary_text", "description", "url", "apply_email", "posted_at",
-    "fetched_at", "is_india", "kind", "deadline",
+    "fetched_at", "is_india", "kind", "deadline", "image", "lat", "lng", "recurring",
 ]
 
 
