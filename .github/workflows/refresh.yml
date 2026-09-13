@@ -1,0 +1,65 @@
+name: Refresh jobs
+
+on:
+  schedule:
+    - cron: "30 2 * * *"      # 08:00 IST daily
+  workflow_dispatch:           # lets you run it by hand from the Actions tab
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install
+        run: pip install --quiet fastapi httpx pyyaml python-dotenv python-multipart
+
+      - name: Pull jobs from every source
+        env:
+          # Optional. Add these under Settings > Secrets and variables > Actions.
+          # Without them the free sources still work; with them India coverage jumps.
+          ADZUNA_APP_ID:  ${{ secrets.ADZUNA_APP_ID }}
+          ADZUNA_APP_KEY: ${{ secrets.ADZUNA_APP_KEY }}
+          RAPIDAPI_KEY:   ${{ secrets.RAPIDAPI_KEY }}
+          JOOBLE_API_KEY: ${{ secrets.JOOBLE_API_KEY }}
+        run: python -m backend.ingest
+
+      - name: Build the static bundle
+        run: python -m backend.export_static
+
+      - name: Commit the refreshed data
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add site/data/jobs.json site/data/companies.json
+          git diff --staged --quiet || git commit -m "data: refresh $(date -u +%Y-%m-%d)"
+          git push
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+  deploy:
+    needs: refresh
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

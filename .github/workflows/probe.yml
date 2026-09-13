@@ -1,0 +1,28 @@
+name: Re-probe company job boards
+
+# Companies move between ATS providers. This rediscovers them monthly
+# and opens a PR if anything changed.
+on:
+  schedule:
+    - cron: "0 4 1 * *"       # 1st of each month
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - run: pip install --quiet httpx pyyaml
+      - run: python -m backend.probe
+      - uses: peter-evans/create-pull-request@v6
+        with:
+          commit-message: "probe: refresh verified ATS tokens"
+          title: "Monthly ATS re-probe"
+          body: "Automated sweep. Companies that gained or lost a public job board."
+          branch: auto/probe

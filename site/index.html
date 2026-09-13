@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Design Jobs India</title>
+<meta name="description" content="Design jobs, internships and freelance work across India — collected from company job boards and job APIs, in one filterable place.">
+<link rel="stylesheet" href="styles.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎨</text></svg>">
+</head>
+<body>
+<header>
+  <div class="brand">
+    <h1>Design Jobs <span>India</span></h1>
+    <p id="stats" class="muted">loading…</p>
+  </div>
+  <nav class="tabs">
+    <button class="tab active" data-tab="jobs">Jobs</button>
+    <button class="tab" data-tab="outreach">Companies</button>
+    <button class="tab" data-tab="about">About</button>
+  </nav>
+  <div class="actions">
+    <button id="export" class="btn">Export CSV</button>
+  </div>
+</header>
+
+<main id="tab-jobs" class="tab-panel active">
+  <aside class="filters">
+    <input id="q" class="search" type="search" placeholder="Search title or company…">
+    <div class="fgroup">
+      <label class="flabel">Location</label>
+      <select id="india">
+        <option value="">Everywhere</option>
+        <option value="1">India only</option>
+        <option value="0">Global / remote</option>
+      </select>
+      <div id="f-city" class="chips"></div>
+    </div>
+    <div class="fgroup"><label class="flabel">Work mode</label><div id="f-remote" class="chips"></div></div>
+    <div class="fgroup"><label class="flabel">Type</label><div id="f-job_type" class="chips"></div></div>
+    <div class="fgroup"><label class="flabel">Discipline</label><div id="f-discipline" class="chips"></div></div>
+    <div class="fgroup">
+      <label class="flabel">Pay — min <b id="salval">any</b></label>
+      <input id="salary" type="range" min="0" max="200000" step="5000" value="0">
+      <label class="check"><input id="hassal" type="checkbox"> Only jobs that list pay</label>
+      <p class="hint">Most Indian listings publish no salary. This hides them.</p>
+    </div>
+    <div class="fgroup">
+      <label class="flabel">Posted</label>
+      <select id="days">
+        <option value="0">Any time</option><option value="7">Last 7 days</option>
+        <option value="30">Last 30 days</option><option value="90">Last 3 months</option>
+      </select>
+    </div>
+    <div class="fgroup">
+      <label class="flabel">Your shortlist</label>
+      <label class="check"><input id="starred" type="checkbox"> Starred only</label>
+      <label class="check"><input id="notapplied" type="checkbox"> Hide applied</label>
+      <p class="hint">Saved in this browser only.</p>
+    </div>
+    <div class="fgroup"><label class="flabel">Source</label><div id="f-source" class="chips"></div></div>
+    <button id="clear" class="btn wide">Clear filters</button>
+  </aside>
+  <section class="results">
+    <div class="rhead">
+      <span id="count" class="muted"></span>
+      <select id="sort">
+        <option value="date">Newest</option><option value="salary">Highest pay</option>
+        <option value="company">Company A–Z</option><option value="title">Title A–Z</option>
+      </select>
+    </div>
+    <div id="list"></div>
+    <button id="more" class="btn wide" hidden>Load more</button>
+  </section>
+</main>
+
+<main id="tab-outreach" class="tab-panel">
+  <div class="pad">
+    <h2>Company directory</h2>
+    <p class="muted">Design studios and companies across India — for internships, placement
+      drives and cold outreach. Studios rarely post jobs publicly; email them directly.</p>
+    <div class="rhead">
+      <input id="coq" class="search" style="max-width:260px;margin:0" type="search" placeholder="Search company or city…">
+      <select id="cokind" style="width:auto;margin:0">
+        <option value="">All</option><option value="studio">Design studios</option>
+        <option value="product">Product companies</option>
+      </select>
+      <select id="costatus" style="width:auto;margin:0">
+        <option value="">Any status</option><option value="new">Not contacted</option>
+        <option value="contacted">Contacted</option><option value="replied">Replied</option>
+        <option value="confirmed">Confirmed</option><option value="declined">Declined</option>
+      </select>
+    </div>
+    <table id="cotable"><thead><tr>
+      <th>Company</th><th>City</th><th>Contact</th><th>Status</th><th>Notes</th>
+    </tr></thead><tbody></tbody></table>
+    <p class="hint" style="margin-top:14px">Your status and notes save in this browser only —
+      they are never uploaded. Use Export CSV to keep a copy.</p>
+  </div>
+</main>
+
+<main id="tab-about" class="tab-panel">
+  <div class="pad">
+    <h2>What this is</h2>
+    <p class="muted" style="font-size:14px;line-height:1.7;max-width:62ch">
+      A collection, not a job board. Companies do not register here and nothing is posted —
+      every listing is pulled automatically from company career pages and public job APIs,
+      then filtered down to design roles only. It refreshes itself every day.</p>
+    <h3 style="margin-top:24px">Where the listings come from</h3>
+    <div id="srcbreak" class="chips" style="margin-top:10px"></div>
+    <h3 style="margin-top:24px">Missing something?</h3>
+    <p class="muted" style="max-width:62ch">Many Indian studios hire only over email and never
+      post publicly — those are in the Companies tab instead. If a company is missing,
+      open an issue or a pull request on the repo.</p>
+    <p style="margin-top:16px"><a id="repo" class="btn" href="#" target="_blank" rel="noopener">View on GitHub</a></p>
+    <p class="muted" id="gen" style="margin-top:20px"></p>
+  </div>
+</main>
+
+<div id="toast" class="toast" hidden></div>
+<script src="app.js"></script>
+</body>
+</html>

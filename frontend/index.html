@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Design Jobs India</title>
+<link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+<header>
+  <div class="brand">
+    <h1>Design Jobs <span>India</span></h1>
+    <p id="stats" class="muted">loading…</p>
+  </div>
+  <nav class="tabs">
+    <button class="tab active" data-tab="jobs">Jobs</button>
+    <button class="tab" data-tab="outreach">Outreach</button>
+    <button class="tab" data-tab="sources">Sources</button>
+  </nav>
+  <div class="actions">
+    <button id="refresh" class="btn">Refresh</button>
+    <label class="btn" for="csv">Upload CSV</label>
+    <input id="csv" type="file" accept=".csv" hidden>
+    <a class="btn" href="/api/export.csv">Export</a>
+  </div>
+</header>
+
+<!-- JOBS -->
+<main id="tab-jobs" class="tab-panel active">
+  <aside class="filters">
+    <input id="q" class="search" type="search" placeholder="Search title, company, text…">
+
+    <div class="fgroup">
+      <label class="flabel">Location</label>
+      <select id="india">
+        <option value="">Everywhere</option>
+        <option value="1" selected>India only</option>
+        <option value="0">Outside India / global remote</option>
+      </select>
+      <input id="city" class="search" type="search" placeholder="City — Delhi, Mumbai…">
+    </div>
+
+    <div class="fgroup"><label class="flabel">Work mode</label><div id="f-remote" class="chips"></div></div>
+    <div class="fgroup"><label class="flabel">Type</label><div id="f-job_type" class="chips"></div></div>
+    <div class="fgroup"><label class="flabel">Discipline</label><div id="f-discipline" class="chips"></div></div>
+
+    <div class="fgroup">
+      <label class="flabel">Pay — min <b id="salval">any</b></label>
+      <input id="salary" type="range" min="0" max="200000" step="5000" value="0">
+      <label class="check"><input id="hassal" type="checkbox"> Only jobs that list pay</label>
+      <p class="hint">Most Indian listings publish no salary. Turning this on hides them.</p>
+    </div>
+
+    <div class="fgroup">
+      <label class="flabel">Posted</label>
+      <select id="days">
+        <option value="0">Any time</option>
+        <option value="7">Last 7 days</option>
+        <option value="30">Last 30 days</option>
+        <option value="90">Last 3 months</option>
+      </select>
+    </div>
+
+    <div class="fgroup">
+      <label class="flabel">Shortlist</label>
+      <label class="check"><input id="starred" type="checkbox"> Starred only</label>
+      <label class="check"><input id="notapplied" type="checkbox"> Hide applied</label>
+    </div>
+
+    <div class="fgroup"><label class="flabel">Source</label><div id="f-source" class="chips"></div></div>
+    <button id="clear" class="btn wide">Clear filters</button>
+  </aside>
+
+  <section class="results">
+    <div class="rhead">
+      <span id="count" class="muted"></span>
+      <select id="sort">
+        <option value="date">Newest</option>
+        <option value="salary">Highest pay</option>
+        <option value="company">Company A–Z</option>
+        <option value="title">Title A–Z</option>
+      </select>
+    </div>
+    <div id="list"></div>
+    <button id="more" class="btn wide" hidden>Load more</button>
+  </section>
+</main>
+
+<!-- OUTREACH -->
+<main id="tab-outreach" class="tab-panel">
+  <div class="pad">
+    <h2>Placement outreach</h2>
+    <p class="muted">Companies to approach for your college. Track who you emailed and who replied.</p>
+    <div class="rhead">
+      <select id="ostatus">
+        <option value="">All</option><option value="new">Not contacted</option>
+        <option value="contacted">Contacted</option><option value="replied">Replied</option>
+        <option value="confirmed">Confirmed</option><option value="declined">Declined</option>
+      </select>
+      <button id="addco" class="btn">Add company</button>
+    </div>
+    <table id="cotable"><thead><tr>
+      <th>Company</th><th>City</th><th>Kind</th><th>Email</th><th>Status</th><th>Notes</th>
+    </tr></thead><tbody></tbody></table>
+  </div>
+</main>
+
+<!-- SOURCES -->
+<main id="tab-sources" class="tab-panel">
+  <div class="pad">
+    <h2>Sources</h2>
+    <p class="muted">Where the jobs came from, and when each last ran.</p>
+    <table id="srctable"><thead><tr>
+      <th>Source</th><th>Last run</th><th>Found</th><th>Status</th>
+    </tr></thead><tbody></tbody></table>
+    <h3>Add API keys</h3>
+    <p class="muted">Edit <code>.env</code> in the project folder, then hit Refresh. All optional —
+      the free sources need no key.</p>
+    <ul class="keys">
+      <li><b>Adzuna</b> — India coverage, 250 free calls/day · <a href="https://developer.adzuna.com/" target="_blank" rel="noopener">developer.adzuna.com</a></li>
+      <li><b>JSearch (RapidAPI)</b> — pulls Google Jobs, LinkedIn and Indeed. Best India coverage · <a href="https://rapidapi.com/letscrape-6bRBa3QguO5/api/jsearch" target="_blank" rel="noopener">rapidapi.com</a></li>
+      <li><b>Jooble</b> — India · <a href="https://jooble.org/api/about" target="_blank" rel="noopener">jooble.org/api/about</a></li>
+    </ul>
+  </div>
+</main>
+
+<div id="toast" class="toast" hidden></div>
+<script src="/app.js"></script>
+</body>
+</html>
