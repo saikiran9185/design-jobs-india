@@ -1,8 +1,19 @@
 # Design Jobs India
 
-A local Mac web app that **collects** design jobs, internships and freelance gigs from many
-sources into one filterable place. It is not a job board — companies never register here.
-Nothing is posted; everything is pulled.
+### → **[saikiran9185.github.io/design-jobs-india](https://saikiran9185.github.io/design-jobs-india/)**
+
+Design jobs, internships and freelance work across India, **collected** from company job
+boards and public job APIs into one filterable place. It is not a job board — companies
+never register here. Nothing is posted; everything is pulled, and it refreshes itself
+every morning at 08:00 IST.
+
+Open the link. Nothing to install.
+
+---
+
+## Running it locally
+
+Only needed if you want to add sources, change the company list, or upload your own CSVs.
 
 ```bash
 ./run.sh probe     # find which companies have a public job board  (run once, ~3 min)
@@ -124,11 +135,39 @@ frontend/               vanilla HTML/CSS/JS, no build step
 data/jobs.db            everything, in one file
 ```
 
-## Keeping it fresh
+## How the hosted version works
 
-```bash
-# refresh every morning at 9
-(crontab -l 2>/dev/null; echo "0 9 * * * cd ~/DesignJobsIndia && ./run.sh ingest") | crontab -
-```
+GitHub Pages cannot run Python, so the published site is pure HTML/JS reading two JSON files.
+GitHub Actions does the work:
 
-Re-running ingest never loses your stars, applied marks or notes — jobs are upserted by ID.
+| Workflow | When | What |
+|---|---|---|
+| `refresh.yml` | daily 08:00 IST + on push | ingest → export → commit `site/data/*.json` → deploy Pages |
+| `probe.yml` | 1st of each month | re-probe ATS tokens, open a PR if anything moved |
+
+Run either by hand from the **Actions** tab.
+
+**To add API keys to the hosted build:** repo **Settings → Secrets and variables → Actions →
+New repository secret**. Names: `RAPIDAPI_KEY`, `ADZUNA_APP_ID`, `ADZUNA_APP_KEY`,
+`JOOBLE_API_KEY`. The workflow picks them up on the next run.
+
+On the live site your stars, applied marks and outreach notes are saved in **your browser
+only** — they are never uploaded and never visible to anyone else. Export CSV to keep a copy.
+
+Running `ingest` locally never loses your stars or notes either — jobs are upserted by ID.
+
+---
+
+## Contact details
+
+`config/companies.yaml` holds the directory. `./run.sh contacts` visits each studio's own
+website and extracts **only role mailboxes on their own domain** — `careers@`, `hr@`,
+`hello@`, `info@`. It never invents an address, and it deliberately skips named individuals'
+addresses: a person's own email is not ours to publish, and a careers inbox is the right
+place for a placement enquiry anyway.
+
+Addresses that turn out to be a global office rather than the India desk are moved to
+`email_global_office` with a note, so you do not email Ogilvy Germany about a Delhi drive.
+
+About half of Indian studios publish no email at all — they use a contact form. Those stay
+blank for you to fill in as you find them.
