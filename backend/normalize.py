@@ -203,14 +203,58 @@ def _parse_salary(text: str, out: dict) -> dict:
     return out
 
 
-def monthly_inr(job: dict) -> int | None:
+# Sources publish "annual", "annually", "per year" and "yearly" for the same thing,
+# and some publish an hourly rate that must not be read as a salary.
+PERIOD_ALIASES = {
+    "annual": "yearly", "annually": "yearly", "year": "yearly", "yr": "yearly",
+    "month": "monthly", "monthly": "monthly", "mo": "monthly",
+    "hour": "hourly", "hourly": "hourly", "hr": "hourly",
+    "week": "weekly", "weekly": "weekly", "day": "daily", "daily": "daily",
+}
+HOURS_PER_MONTH = 160          # 40h x 4 weeks, for comparing an hourly rate to a salary
+
+# Plausible monthly INR for a design role. Anything outside this is a parse artefact.
+MIN_MONTHLY_INR = 3_000
+MAX_MONTHLY_INR = 4_000_000
+
+
+def canon_period(period: str | None) -> str:
+    p = (period or "").strip().lower()
+    return PERIOD_ALIASES.get(p, p or "yearly")
+
+
+def to_monthly(amount: float, period: str) -> float:
+    period = canon_period(period)
+    if period == "yearly":
+        return amount / 12
+    if period == "hourly":
+        return amount * HOURS_PER_MONTH
+    if period == "weekly":
+        return amount * 4.33
+    if period == "daily":
+        return amount * 22
+    return amount
+
+
+def monthly_inr(job: dict, fx: float = 1.0) -> int | None:
     """Normalise to monthly INR so one slider can compare everything."""
     lo = job.get("salary_min")
     if not lo:
         return None
-    if job.get("salary_period") == "yearly":
-        return int(lo / 12)
-    return int(lo)
+    return int(to_monthly(lo * fx, job.get("salary_period")))
+
+
+def sane_salary(job: dict) -> bool:
+    """Reject parse artefacts. RemoteOK publishes 10,000-750,000 on the same posting."""
+    lo, hi = job.get("salary_min"), job.get("salary_max")
+    if not lo or lo <= 0:
+        return False
+    if hi and (hi < lo or hi > lo * 25):      # a 25x band is not a real salary range
+        return False
+    monthly = to_monthly(lo, job.get("salary_period"))
+    fx = {"USD": 88.0, "EUR": 95.0, "GBP": 111.0, "AED": 24.0, "SGD": 65.0}.get(
+        job.get("salary_currency") or "INR", 1.0)
+    return MIN_MONTHLY_INR <= monthly * fx <= MAX_MONTHLY_INR
 
 
 # --- assembly ---------------------------------------------------------------

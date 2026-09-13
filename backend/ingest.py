@@ -10,8 +10,8 @@ import yaml
 from dotenv import load_dotenv
 
 from . import db
-from .normalize import is_design_role
-from .sources import apis, ats
+from .normalize import canon_period, is_design_role, sane_salary
+from .sources import apis, ats, india
 
 ROOT = Path(__file__).resolve().parent.parent
 CONFIG = ROOT / "config" / "companies.yaml"
@@ -24,9 +24,20 @@ def load_config() -> dict:
     return yaml.safe_load(CONFIG.read_text()) or {}
 
 
+def clean_salaries(jobs: list[dict]) -> list[dict]:
+    """Normalise the period name, and drop a salary that cannot be real."""
+    for j in jobs:
+        if j.get("salary_min"):
+            j["salary_period"] = canon_period(j.get("salary_period"))
+            if not sane_salary(j):
+                j.update(salary_min=None, salary_max=None,
+                         salary_currency=None, salary_period=None, salary_text=None)
+    return jobs
+
+
 def design_only(jobs: list[dict]) -> list[dict]:
     """Last line of defence. Sources mislabel their own categories; we re-check every row."""
-    return [j for j in jobs if is_design_role(j.get("title", ""))]
+    return clean_salaries([j for j in jobs if is_design_role(j.get("title", ""))])
 
 
 def dedupe(jobs: list[dict]) -> list[dict]:
@@ -49,7 +60,7 @@ def dedupe(jobs: list[dict]) -> list[dict]:
 
 
 def run_api_sources(conn, client, only: set[str] | None = None) -> None:
-    for name, meta in apis.REGISTRY.items():
+    for name, meta in {**india.REGISTRY, **apis.REGISTRY}.items():
         if only and name not in only:
             continue
         try:

@@ -15,6 +15,7 @@ import yaml
 
 from . import db
 from .app import FX_TO_INR
+from .normalize import monthly_inr as _monthly
 
 ROOT = Path(__file__).resolve().parent.parent
 SITE = ROOT / "site"
@@ -26,10 +27,8 @@ FIELDS = ["id", "source", "title", "company", "location", "city", "remote", "job
 
 
 def monthly_inr(r) -> int | None:
-    if not r["salary_min"]:
-        return None
-    inr = r["salary_min"] * FX_TO_INR.get(r["salary_currency"] or "INR", 1.0)
-    return int(inr / 12) if r["salary_period"] == "yearly" else int(inr)
+    """Everything is shown in rupees, so convert once here instead of in the browser."""
+    return _monthly(dict(r), fx=FX_TO_INR.get(r["salary_currency"] or "INR", 1.0))
 
 
 def export_jobs(conn) -> int:
@@ -39,7 +38,9 @@ def export_jobs(conn) -> int:
     for r in rows:
         j = {k: r[k] for k in FIELDS}
         j["discipline"] = [x for x in (r["discipline"] or "").split(",") if x]
-        j["pay_inr_month"] = monthly_inr(r)
+        m = monthly_inr(r)
+        j["pay_inr_month"] = m
+        j["pay_inr_year"] = m * 12 if m else None
         j["description"] = None          # keep the bundle small; the link has the detail
         jobs.append(j)
     (DATA / "jobs.json").write_text(json.dumps({

@@ -22,10 +22,21 @@ const debounce = (fn, ms = 200) => { let t; return (...a) => { clearTimeout(t); 
 const ago = d => { if (!d) return '';
   const n = Math.floor((Date.now() - new Date(d)) / 864e5);
   return isNaN(n) ? '' : n <= 0 ? 'today' : n === 1 ? '1d ago' : n < 30 ? n + 'd ago' : Math.floor(n / 30) + 'mo ago'; };
-const money = j => { if (!j.salary_min) return '';
-  const f = n => n >= 1e5 ? (n / 1e5).toFixed(n % 1e5 ? 1 : 0) + 'L' : n >= 1e3 ? Math.round(n / 1e3) + 'k' : n;
-  const cur = j.salary_currency === 'INR' ? '₹' : (j.salary_currency || '') + ' ';
-  return cur + f(j.salary_min) + (j.salary_max ? '–' + f(j.salary_max) : '') + (j.salary_period === 'monthly' ? '/mo' : '/yr'); };
+// Always rupees. Indian salaries are quoted per month or in lakhs per annum, so
+// show whichever reads naturally and convert foreign currencies on the way in.
+const inr = n => n >= 1e7 ? (n / 1e7).toFixed(n % 1e7 ? 1 : 0) + ' Cr'
+              : n >= 1e5 ? (n / 1e5).toFixed(n % 1e5 ? 1 : 0) + 'L'
+              : n >= 1e3 ? Math.round(n / 1e3) + 'k' : String(n);
+
+const money = j => {
+  const m = j.pay_inr_month;
+  if (!m) return '';
+  // under ~1L/month reads better monthly; above that, LPA is how India quotes it
+  const txt = m < 1e5 ? `₹${inr(m)}/mo` : `₹${inr(m * 12)} LPA`;
+  const foreign = j.salary_currency && j.salary_currency !== 'INR'
+    ? ` <span class="muted" style="font-weight:400">(${j.salary_currency})</span>` : '';
+  return txt + foreign;
+};
 
 // --- tabs ---
 document.querySelectorAll('.tab').forEach(b => b.onclick = () => {
@@ -125,7 +136,8 @@ function buildFacets() {
     job_type: counts('job_type', j => j.job_type),
     discipline: counts('discipline', j => j.discipline),
     source: counts('source', j => j.source),
-    city: counts('city', j => j.is_india ? j.city : null).slice(0, 12),
+    // "India" is not a city — it is the no-city-stated bucket, so keep it out of the chips
+    city: counts('city', j => j.is_india && j.city !== 'India' ? j.city : null).slice(0, 14),
   };
   for (const [key, entries] of Object.entries(groups)) {
     const box = $('#f-' + key); if (!box) continue;
