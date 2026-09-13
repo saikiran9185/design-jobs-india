@@ -60,13 +60,24 @@ jobs:
       - name: Build the static bundle
         run: python -m backend.export_static
 
+      # Committing the data is a convenience, not the point of the run. A transient
+      # GitHub 500 here must never stop the site from deploying, so this step retries
+      # and then gives up quietly.
       - name: Commit the refreshed data
+        continue-on-error: true
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add site/data/jobs.json site/data/companies.json site/data/flags.json
-          git diff --staged --quiet || git commit -m "data: refresh $(date -u +%Y-%m-%d)"
-          git push
+          git diff --staged --quiet && { echo "no data changes"; exit 0; }
+          git commit -m "data: refresh $(date -u +%Y-%m-%dT%H:%MZ)"
+          for attempt in 1 2 3; do
+            if git push; then echo "pushed on attempt $attempt"; exit 0; fi
+            echo "push failed (attempt $attempt), refetching..."
+            git pull --rebase --autostash origin main || true
+            sleep $((attempt * 10))
+          done
+          echo "::warning::could not commit refreshed data; deploying anyway"
 
       - uses: actions/upload-pages-artifact@v3
         with:
