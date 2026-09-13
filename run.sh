@@ -23,6 +23,7 @@ case "${1:-serve}" in
   contacts) python -m backend.find_contacts ;;
   export) python -m backend.export_static ;;
   flags)  python -m backend.flags ;;
+  sync)   python -m backend.supabase_sync "${@:2}" ;;
   serve)
     echo ""
     echo "  Design Jobs India  →  http://localhost:8000"
@@ -30,5 +31,5 @@ case "${1:-serve}" in
     echo ""
     exec uvicorn backend.app:app --host 127.0.0.1 --port 8000 --log-level warning
     ;;
-  *) echo "usage: ./run.sh [serve|ingest|probe|contacts|export|flags]"; exit 1 ;;
+  *) echo "usage: ./run.sh [serve|ingest|probe|contacts|export|flags|sync]"; exit 1 ;;
 esac

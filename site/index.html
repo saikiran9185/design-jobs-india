@@ -23,6 +23,7 @@
     <button class="tab" data-tab="about">About</button>
   </nav>
   <div class="actions">
+    <button id="addjob" class="btn primary">+ Add a listing</button>
     <button id="export" class="btn">Export CSV</button>
   </div>
 </header>
@@ -164,9 +165,84 @@
   </div>
 </main>
 
+<!-- SUBMIT -->
+<div id="submitwrap" class="modalwrap" hidden>
+  <div class="modal">
+    <div class="mhead">
+      <h2>Add a listing</h2>
+      <button id="mclose" class="icon">✕</button>
+    </div>
+
+    <p class="muted">Anyone can add one — no account needed. It goes into a review queue
+      and appears on the site once a human has checked it. That is the whole point: every
+      listing here has been looked at by a person.</p>
+
+    <div class="mtabs">
+      <button class="mtab active" data-m="link">Paste a link</button>
+      <button class="mtab" data-m="image">Upload a screenshot</button>
+      <button class="mtab" data-m="manual">Type it in</button>
+    </div>
+
+    <div class="mpane active" data-m="link">
+      <label class="flabel">Link to the posting</label>
+      <input id="s_sourceurl" class="search" type="url" placeholder="https://… — Instagram, LinkedIn, a studio's careers page">
+      <p class="hint">Paste the link and the rest gets filled in automatically on the next
+        refresh. You can still add details below if you know them.</p>
+    </div>
+
+    <div class="mpane" data-m="image">
+      <label class="flabel">Screenshot of the post</label>
+      <input id="s_image" type="file" accept="image/*">
+      <div id="ocrstatus" class="hint"></div>
+      <p class="hint">Text is read in your browser — the image is never uploaded anywhere.
+        Stylised Instagram type reads roughly, so check the fields below before sending.</p>
+    </div>
+
+    <div class="mpane" data-m="manual">
+      <p class="hint">Fill in whatever you know. Only the title is required.</p>
+    </div>
+
+    <div class="mgrid">
+      <div><label class="flabel">Title *</label>
+        <input id="s_title" class="search" placeholder="Motion Design Intern"></div>
+      <div><label class="flabel">Company</label>
+        <input id="s_company" class="search" placeholder="Lopez Design"></div>
+      <div><label class="flabel">City</label>
+        <input id="s_location" class="search" placeholder="New Delhi"></div>
+      <div><label class="flabel">Pay</label>
+        <input id="s_salary" class="search" placeholder="₹25,000/month or 6 LPA"></div>
+      <div><label class="flabel">Type</label>
+        <select id="s_kind">
+          <option value="job">Job</option><option value="internship">Internship</option>
+          <option value="competition">Competition</option>
+          <option value="hackathon">Hackathon</option><option value="event">Event</option>
+        </select></div>
+      <div><label class="flabel">Closes on</label>
+        <input id="s_deadline" class="search" type="date"></div>
+      <div class="wide"><label class="flabel">Apply link or email</label>
+        <input id="s_url" class="search" placeholder="https://… or careers@studio.com"></div>
+      <div class="wide"><label class="flabel">Details</label>
+        <textarea id="s_desc" class="search" rows="3" placeholder="Anything useful — brief, skills, how to apply"></textarea></div>
+      <div class="wide"><label class="flabel">Your name or handle (optional)</label>
+        <input id="s_by" class="search" placeholder="so people know who found it"></div>
+    </div>
+
+    <!-- bots fill hidden fields; humans never see this one -->
+    <div class="hpot" aria-hidden="true"><input id="s_hp" tabindex="-1" autocomplete="off"></div>
+
+    <div class="mfoot">
+      <span id="s_msg" class="muted"></span>
+      <button id="s_submit" class="btn primary">Send for review</button>
+    </div>
+  </div>
+</div>
+
 <div id="toast" class="toast" hidden></div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/leaflet.markercluster.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/tesseract.js/5.1.0/tesseract.min.js"></script>
+<script src="config.js"></script>
 <script src="app.js"></script>
+<script src="submit.js"></script>
 </body>
 </html>

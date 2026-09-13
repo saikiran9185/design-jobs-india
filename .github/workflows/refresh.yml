@@ -40,6 +40,18 @@ jobs:
           JOOBLE_API_KEY: ${{ secrets.JOOBLE_API_KEY }}
         run: python -m backend.ingest
 
+      - name: Pull approved community submissions
+        env:
+          SUPABASE_URL:         ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+        run: python -m backend.supabase_sync pull
+
+      - name: Mirror listings to Supabase for the All-jobs view
+        env:
+          SUPABASE_URL:         ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+        run: python -m backend.supabase_sync push
+
       - name: Tally community verifications from the issue tracker
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
