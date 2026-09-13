@@ -1,0 +1,39 @@
+name: Verify a listing
+description: Confirm a job, internship or competition is genuine.
+title: "[verify] "
+labels: ["verified"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Anyone can vouch for a listing. Confirmations are counted and shown as a
+        **✓ Verified** badge on the site. Please only verify something you have
+        actually checked.
+  - type: input
+    id: job_id
+    attributes:
+      label: Listing ID
+      description: Filled in automatically when you click Verify on the site.
+    validations: { required: true }
+  - type: input
+    id: listing
+    attributes:
+      label: Which listing
+      description: Title and company.
+    validations: { required: true }
+  - type: dropdown
+    id: how
+    attributes:
+      label: How do you know it is genuine?
+      options:
+        - I work at this company
+        - I applied and got a real response
+        - I know someone who works there
+        - I checked the company's official website or careers page
+        - Someone I trust confirmed it
+    validations: { required: true }
+  - type: textarea
+    id: notes
+    attributes:
+      label: Anything else
+      description: Optional.

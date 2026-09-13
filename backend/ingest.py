@@ -11,7 +11,7 @@ from dotenv import load_dotenv
 
 from . import db
 from .normalize import canon_period, is_design_role, sane_salary
-from .sources import apis, ats, india
+from .sources import apis, ats, events, india
 
 ROOT = Path(__file__).resolve().parent.parent
 CONFIG = ROOT / "config" / "companies.yaml"
@@ -37,7 +37,10 @@ def clean_salaries(jobs: list[dict]) -> list[dict]:
 
 def design_only(jobs: list[dict]) -> list[dict]:
     """Last line of defence. Sources mislabel their own categories; we re-check every row."""
-    return clean_salaries([j for j in jobs if is_design_role(j.get("title", ""))])
+    # A competition is not titled like a job — "Mascot Design Challenge 2026" passes,
+    # but "Avinya Energy Startup Challenge" would not. Those sources filter themselves.
+    return clean_salaries([j for j in jobs
+                           if j.get("kind", "job") != "job" or is_design_role(j.get("title", ""))])
 
 
 def dedupe(jobs: list[dict]) -> list[dict]:
@@ -60,7 +63,7 @@ def dedupe(jobs: list[dict]) -> list[dict]:
 
 
 def run_api_sources(conn, client, only: set[str] | None = None) -> None:
-    for name, meta in {**india.REGISTRY, **apis.REGISTRY}.items():
+    for name, meta in {**india.REGISTRY, **events.REGISTRY, **apis.REGISTRY}.items():
         if only and name not in only:
             continue
         try:

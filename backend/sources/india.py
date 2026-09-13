@@ -77,6 +77,9 @@ def _unstop_job(item: dict, kind: str) -> dict | None:
                    salary_currency=CURRENCY.get(detail.get("currency"), "INR"),
                    salary_period=period, salary_text=None)
     job["is_india"] = 1                                 # Unstop is an India-only platform
+    job["kind"] = {"competitions": "competition"}.get(kind, "job")
+    if kind == "internships":
+        job["job_type"] = "internship"
     return job
 
 

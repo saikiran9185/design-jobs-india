@@ -49,6 +49,16 @@ Remotive is wired up but its free API currently returns only ~16 jobs total and 
 
 **Optional APIs (add a key).** This is how you get real India coverage — see below.
 
+**Competitions, challenges and hackathons.** Unstop competitions, **MyGov / Innovate India**
+(the government's design challenges, logo and mascot contests, reel and poster competitions)
+via their RSS feeds, and **Devfolio** for Indian student hackathons with live deadlines.
+Filter them with the **Show** chips at the top of the sidebar.
+
+**What cannot be collected: Instagram.** Many Indian studios post openings only to Instagram
+stories. There is no public API for that, Meta's Graph API does not expose other accounts'
+posts, and scraping gets blocked and banned. Those go in by hand through CSV upload or a
+pull request — there is no honest automated route.
+
 **Your own uploads.** Drag a CSV in. Jobs you found on Instagram, WhatsApp or a studio's
 own site live alongside everything else. Only a `title` column is required; `company`,
 `location`, `url`, `salary`, `job_type`, `description`, `posted_at` are all optional.
@@ -56,11 +66,27 @@ Uploads skip the design filter — if you added it, it stays.
 
 ---
 
+## Verified and reported listings
+
+There is no gatekeeper. Every card has **✓ verify** and **⚠ report** buttons that open a
+pre-filled GitHub issue — anyone with a free GitHub account can submit one. A workflow
+tallies the issue tracker daily into `site/data/flags.json` and the site shows the counts.
+
+Because the store is the repo's own issue tracker, every claim is public, attributable and
+reversible. Nothing is hidden in a private database.
+
+Reported listings are hidden by default (unless verifications outnumber reports). The single
+most useful thing to report: any "internship" that asks you to pay a registration, training
+or security fee. That is the most common scam in Indian design hiring and it is never
+legitimate.
+
+---
+
 ## Honest limitation: India coverage
 
-Right now about **1 in 10** jobs is in India. That is not a bug, it is what free sources give:
-most Indian companies use Keka, Darwinbox or Zoho Recruit, which have no public job API,
-and the free remote boards are US/EU heavy.
+**Solved, mostly.** Adding Unstop and Instahyre took India from 10 jobs to over 2,000,
+because Western ATS platforms simply are not what Indian companies use. Naukri requires a
+captcha and Indeed returns 403, so both are out; Keka and Darwinbox publish no open API.
 
 **Two ways to fix it, both real:**
 

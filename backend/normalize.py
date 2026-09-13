@@ -302,6 +302,8 @@ def build_job(*, source, external_id, title, company=None, location="", country=
         "posted_at": posted_at or datetime.now(timezone.utc).isoformat(),
         "fetched_at": datetime.now(timezone.utc).isoformat(),
         "is_india": int(detect_india(location, country, company or "")),
+        "kind": "job",
+        "deadline": None,
     }
     job.update(parse_salary(salary_text or desc))
     return job

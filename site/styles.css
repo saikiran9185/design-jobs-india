@@ -99,3 +99,10 @@ code{background:var(--bg);padding:1px 6px;border-radius:4px;border:1px solid var
   header{padding:12px 14px}
   .tabs{margin-left:0;order:3;width:100%}
 }
+
+/* trust + opportunity kind */
+.tag.verified{color:var(--ok);border-color:currentColor;font-weight:650}
+.tag.reported{color:#c0392b;border-color:currentColor;font-weight:650}
+@media (prefers-color-scheme:dark){.tag.reported{color:#ff7a68}}
+.tag.kind{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:650}
+.jbtns a.icon{text-decoration:none;line-height:1.7}

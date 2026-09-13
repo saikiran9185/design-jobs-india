@@ -28,6 +28,11 @@
   <aside class="filters">
     <input id="q" class="search" type="search" placeholder="Search title or company…">
     <div class="fgroup">
+      <label class="flabel">Show</label>
+      <div id="f-kind" class="chips"></div>
+    </div>
+
+    <div class="fgroup">
       <label class="flabel">Location</label>
       <select id="india">
         <option value="">Everywhere</option>
@@ -58,6 +63,13 @@
       <label class="check"><input id="notapplied" type="checkbox"> Hide applied</label>
       <p class="hint">Saved in this browser only.</p>
     </div>
+    <div class="fgroup">
+      <label class="flabel">Trust</label>
+      <label class="check"><input id="onlyverified" type="checkbox"> Verified only</label>
+      <label class="check"><input id="hidereported" type="checkbox" checked> Hide reported</label>
+      <p class="hint">Anyone can verify or report a listing — it takes a free GitHub account.</p>
+    </div>
+
     <div class="fgroup"><label class="flabel">Source</label><div id="f-source" class="chips"></div></div>
     <button id="clear" class="btn wide">Clear filters</button>
   </aside>
@@ -108,10 +120,20 @@
       then filtered down to design roles only. It refreshes itself every day.</p>
     <h3 style="margin-top:24px">Where the listings come from</h3>
     <div id="srcbreak" class="chips" style="margin-top:10px"></div>
+    <h3 style="margin-top:24px">Verified and reported listings</h3>
+    <p class="muted" style="max-width:62ch">There is no gatekeeper here. Anyone with a free
+      GitHub account can vouch for a listing or flag it — the buttons on every card open a
+      pre-filled form. Counts are public and auditable in the repo's issue tracker, and the
+      site rebuilds with them every morning.</p>
+    <p class="muted" style="max-width:62ch"><b>Worth reporting:</b> any "internship" that asks
+      you to pay a registration, training or security fee. That is the most common scam in
+      Indian design hiring, and it is never legitimate.</p>
+
     <h3 style="margin-top:24px">Missing something?</h3>
     <p class="muted" style="max-width:62ch">Many Indian studios hire only over email and never
       post publicly — those are in the Companies tab instead. If a company is missing,
-      open an issue or a pull request on the repo.</p>
+      open an issue or a pull request on the repo. Instagram-only postings cannot be collected
+      automatically — Instagram blocks it — so those go in by hand.</p>
     <p style="margin-top:16px"><a id="repo" class="btn" href="#" target="_blank" rel="noopener">View on GitHub</a></p>
     <p class="muted" id="gen" style="margin-top:20px"></p>
   </div>

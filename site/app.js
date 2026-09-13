@@ -3,9 +3,9 @@
 const $ = s => document.querySelector(s);
 const REPO = 'https://github.com/saikiran9185/design-jobs-india';
 
-let JOBS = [], COMPANIES = [], shown = 0;
+let JOBS = [], COMPANIES = [], FLAGS = {}, shown = 0;
 const PAGE = 60;
-const sel = { remote: new Set(), job_type: new Set(), discipline: new Set(), source: new Set(), city: new Set() };
+const sel = { kind: new Set(), remote: new Set(), job_type: new Set(), discipline: new Set(), source: new Set(), city: new Set() };
 
 // --- local state (never leaves the browser) ---
 const store = {
@@ -38,6 +38,36 @@ const money = j => {
   return txt + foreign;
 };
 
+// --- trust: counts come from the repo's issue tracker, rebuilt daily ---
+function trustBadge(j) {
+  const f = FLAGS[j.id];
+  if (!f) return '';
+  if (f.reported > 0) {
+    const why = f.reasons?.length ? ` — ${esc(f.reasons[0])}` : '';
+    return `<span class="tag reported" title="Reported by ${f.reported}${why}">⚠ reported ${f.reported > 1 ? '×' + f.reported : ''}</span>`;
+  }
+  if (f.verified > 0) return `<span class="tag verified">✓ verified ${f.verified > 1 ? '×' + f.verified : ''}</span>`;
+  return '';
+}
+
+function deadlineTag(j) {
+  if (!j.deadline) return '';
+  const days = Math.ceil((new Date(j.deadline) - Date.now()) / 864e5);
+  if (isNaN(days) || days < 0) return '<span class="tag">closed</span>';
+  return `<span class="tag ${days <= 7 ? 'intern' : ''}">${days === 0 ? 'closes today' : 'closes in ' + days + 'd'}</span>`;
+}
+
+// Pre-fills the GitHub issue form. Anyone with a free account can submit one.
+function issueUrl(j, kind) {
+  const p = new URLSearchParams({
+    template: `${kind}-job.yml`,
+    title: `[${kind}] ${j.title}`.slice(0, 90),
+    job_id: j.id,
+    listing: `${j.title} — ${j.company || 'unknown'} (${j.url})`.slice(0, 200),
+  });
+  return `${REPO}/issues/new?${p}`;
+}
+
 // --- tabs ---
 document.querySelectorAll('.tab').forEach(b => b.onclick = () => {
   document.querySelectorAll('.tab').forEach(x => x.classList.toggle('active', x === b));
@@ -52,7 +82,13 @@ function filtered() {
   const hasSal = $('#hassal').checked, onlyStar = $('#starred').checked, hideApplied = $('#notapplied').checked;
   const cutoff = days ? Date.now() - days * 864e5 : 0;
 
+  const onlyVerified = $('#onlyverified').checked, hideReported = $('#hidereported').checked;
+
   let out = JOBS.filter(j => {
+    const f = FLAGS[j.id] || {};
+    if (onlyVerified && !(f.verified > 0)) return false;
+    if (hideReported && f.reported > 0 && !(f.verified > f.reported)) return false;
+    if (sel.kind.size && !sel.kind.has(j.kind || 'job')) return false;
     if (q && !(`${j.title} ${j.company || ''} ${j.location || ''}`.toLowerCase().includes(q))) return false;
     if (india === '1' && !j.is_india) return false;
     if (india === '0' && j.is_india) return false;
@@ -92,10 +128,13 @@ function card(j) {
       ${j.company ? `<span class="co">${esc(j.company)}</span>` : ''}
       ${j.location ? `<span class="tag">${esc(j.location)}</span>` : ''}
       <span class="tag ${j.remote === 'remote' ? 'remote' : ''}">${j.remote}</span>
-      <span class="tag ${j.job_type === 'internship' ? 'intern' : ''}">${j.job_type}</span>
+      <span class="tag ${j.job_type === 'internship' ? 'intern' : ''} ${j.kind && j.kind !== 'job' ? 'kind' : ''}">${j.kind && j.kind !== 'job' ? j.kind : j.job_type}</span>
       ${j.discipline.map(d => `<span class="tag disc">${d}</span>`).join('')}
       <span class="tag">${esc(j.source)}</span><span class="tag">${ago(j.posted_at)}</span>
+      ${deadlineTag(j)}${trustBadge(j)}
       <span class="jbtns">
+        <a class="icon" href="${issueUrl(j, 'verify')}" target="_blank" rel="noopener" title="Confirm this listing is genuine">✓ verify</a>
+        <a class="icon" href="${issueUrl(j, 'report')}" target="_blank" rel="noopener" title="Flag as scam, fake or expired">⚠ report</a>
         <button class="icon ${m.starred ? 'on' : ''}" data-f="starred">★</button>
         <button class="icon ${m.applied ? 'on' : ''}" data-f="applied">applied</button>
       </span>
@@ -132,6 +171,7 @@ function buildFacets() {
     return Object.entries(m).sort((a, b) => b[1] - a[1]);
   };
   const groups = {
+    kind: counts('kind', j => j.kind || 'job'),
     remote: counts('remote', j => j.remote),
     job_type: counts('job_type', j => j.job_type),
     discipline: counts('discipline', j => j.discipline),
@@ -209,7 +249,7 @@ $('#export').onclick = () => {
 // --- wiring ---
 $('#q').oninput = debounce(() => render());
 ['#india', '#days', '#sort'].forEach(s => $(s).onchange = () => render());
-['#hassal', '#starred', '#notapplied'].forEach(s => $(s).onchange = () => render());
+['#hassal', '#starred', '#notapplied', '#onlyverified', '#hidereported'].forEach(s => $(s).onchange = () => render());
 $('#salary').oninput = e => $('#salval').textContent = +e.target.value ? '₹' + (+e.target.value / 1000) + 'k/mo' : 'any';
 $('#salary').onchange = () => render();
 $('#more').onclick = () => render(false);
@@ -217,7 +257,8 @@ $('#more').onclick = () => render(false);
 $('#clear').onclick = () => {
   Object.values(sel).forEach(s => s.clear());
   $('#q').value = ''; $('#salary').value = 0; $('#salval').textContent = 'any';
-  ['#hassal', '#starred', '#notapplied'].forEach(s => $(s).checked = false);
+  ['#hassal', '#starred', '#notapplied', '#onlyverified'].forEach(s => $(s).checked = false);
+  $('#hidereported').checked = true;
   $('#days').value = '0'; $('#india').value = '';
   buildFacets(); render();
 };
@@ -226,13 +267,16 @@ $('#repo').href = REPO;
 // --- boot ---
 (async () => {
   try {
-    const [j, c] = await Promise.all([
+    const [j, c, f] = await Promise.all([
       fetch('data/jobs.json').then(r => r.json()),
       fetch('data/companies.json').then(r => r.json()).catch(() => ({ companies: [] })),
+      fetch('data/flags.json').then(r => r.json()).catch(() => ({ flags: {} })),
     ]);
-    JOBS = j.jobs; COMPANIES = c.companies || [];
+    JOBS = j.jobs; COMPANIES = c.companies || []; FLAGS = f.flags || {};
     $('#stats').textContent =
-      `${j.count.toLocaleString()} jobs · ${j.india} in India · ${COMPANIES.length} companies · updated ${ago(j.generated_at)}`;
+      `${(j.kinds?.job ?? j.count).toLocaleString()} jobs · ${j.india} in India · `
+      + `${(j.kinds?.competition ?? 0) + (j.kinds?.hackathon ?? 0)} competitions · `
+      + `${COMPANIES.length} companies · updated ${ago(j.generated_at)}`;
     $('#gen').textContent = 'Last refreshed ' + new Date(j.generated_at).toLocaleString();
     buildFacets(); render();
   } catch (e) {

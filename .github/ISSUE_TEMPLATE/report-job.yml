@@ -1,0 +1,39 @@
+name: Report a listing
+description: Flag a listing as a scam, fake, expired or asking for money.
+title: "[report] "
+labels: ["reported"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Reports are counted and shown as a **⚠ Reported** warning on the site.
+        Unpaid "internships" that ask you to pay a registration or training fee
+        are worth reporting — they are common in Indian design hiring.
+  - type: input
+    id: job_id
+    attributes:
+      label: Listing ID
+      description: Filled in automatically when you click Report on the site.
+    validations: { required: true }
+  - type: input
+    id: listing
+    attributes:
+      label: Which listing
+    validations: { required: true }
+  - type: dropdown
+    id: reason
+    attributes:
+      label: What is wrong with it
+      options:
+        - Asks for money from the applicant
+        - Fake or non-existent company
+        - Role no longer open / link dead
+        - Unpaid work advertised as a paid role
+        - Misleading pay or job description
+        - Duplicate of another listing
+        - Other
+    validations: { required: true }
+  - type: textarea
+    id: notes
+    attributes:
+      label: Details

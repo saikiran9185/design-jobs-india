@@ -29,6 +29,10 @@ CREATE TABLE IF NOT EXISTS jobs (
     apply_email     TEXT,
     posted_at       TEXT,
     fetched_at      TEXT,
+    kind            TEXT DEFAULT 'job',   -- job | competition | hackathon | event
+    deadline        TEXT,
+    verified        INTEGER DEFAULT 0,    -- community confirmations
+    reported        INTEGER DEFAULT 0,    -- community scam reports
     is_india        INTEGER DEFAULT 0,
     starred         INTEGER DEFAULT 0,
     applied         INTEGER DEFAULT 0,
@@ -39,6 +43,7 @@ CREATE INDEX IF NOT EXISTS idx_jobs_posted   ON jobs(posted_at DESC);
 CREATE INDEX IF NOT EXISTS idx_jobs_company  ON jobs(company);
 CREATE INDEX IF NOT EXISTS idx_jobs_source   ON jobs(source);
 CREATE INDEX IF NOT EXISTS idx_jobs_india    ON jobs(is_india);
+CREATE INDEX IF NOT EXISTS idx_jobs_kind     ON jobs(kind);
 
 -- Outreach side: companies to approach for the college placement drive.
 CREATE TABLE IF NOT EXISTS companies (
@@ -86,7 +91,7 @@ COLUMNS = [
     "id", "source", "external_id", "title", "company", "location", "city", "country",
     "remote", "job_type", "discipline", "salary_min", "salary_max", "salary_currency",
     "salary_period", "salary_text", "description", "url", "apply_email", "posted_at",
-    "fetched_at", "is_india",
+    "fetched_at", "is_india", "kind", "deadline",
 ]
 
 

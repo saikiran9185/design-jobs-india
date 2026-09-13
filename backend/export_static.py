@@ -23,7 +23,7 @@ DATA = SITE / "data"
 
 FIELDS = ["id", "source", "title", "company", "location", "city", "remote", "job_type",
           "discipline", "salary_min", "salary_max", "salary_currency", "salary_period",
-          "url", "apply_email", "posted_at", "is_india"]
+          "url", "apply_email", "posted_at", "is_india", "kind", "deadline"]
 
 
 def monthly_inr(r) -> int | None:
@@ -43,10 +43,14 @@ def export_jobs(conn) -> int:
         j["pay_inr_year"] = m * 12 if m else None
         j["description"] = None          # keep the bundle small; the link has the detail
         jobs.append(j)
+    kinds: dict[str, int] = {}
+    for j in jobs:
+        kinds[j.get("kind") or "job"] = kinds.get(j.get("kind") or "job", 0) + 1
     (DATA / "jobs.json").write_text(json.dumps({
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "count": len(jobs),
         "india": sum(1 for j in jobs if j["is_india"]),
+        "kinds": kinds,
         "jobs": jobs,
     }, ensure_ascii=False, separators=(",", ":")))
     return len(jobs)
