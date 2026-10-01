@@ -6,7 +6,7 @@ product_companies:
   verified: true
 - name: Amplitude
   token: amplitude
-  ats: greenhouse
+  ats: ashby
   city: Remote
   verified: true
 - name: Buffer
@@ -91,11 +91,6 @@ product_companies:
   verified: true
 - name: Observe.ai
   token: observeai
-  ats: greenhouse
-  city: Bengaluru
-  verified: true
-- name: Postman
-  token: postman
   ats: greenhouse
   city: Bengaluru
   verified: true
@@ -404,6 +399,11 @@ product_companies:
   ats: unknown
   city: Noida
   verified: false
+- name: Postman
+  token: postman
+  ats: unknown
+  city: Bengaluru
+  verified: false
 - name: Practo
   token: practo
   ats: unknown
@@ -525,7 +525,7 @@ studios:
   - hirol.gandhi@ogilvy.com
   - information.canada@ogilvy.com
   email_global_office: info@ogilvy.de
-  notes: Global site only — ask this address for the India office contact.
+  notes: "Global site only \u2014 ask this address for the India office contact."
 - name: Dentsu Creative India
   city: Gurugram
   site: dentsu.com
@@ -539,7 +539,7 @@ studios:
   other_emails:
   - hello_leo_team_aus@leoburnett.com.au
   email_global_office: hello@leoburnett.com.tw
-  notes: Global site only — ask this address for the India office contact.
+  notes: "Global site only \u2014 ask this address for the India office contact."
 - name: Wieden+Kennedy India
   city: New Delhi
   site: wk.com
@@ -548,7 +548,7 @@ studios:
   - jobs.tokyo@wk.com
   - jobs.shanghai@wk.com
   email_global_office: jobs.ny@wk.com
-  notes: Global site only — ask this address for the India office contact.
+  notes: "Global site only \u2014 ask this address for the India office contact."
 - name: Landor India
   city: New Delhi
   site: landor.com
